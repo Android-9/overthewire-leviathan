@@ -14,4 +14,3 @@ This is up to date as of September 26th, 2024.
 - [Level 5]()
 - [Level 6]()
 - [Level 7]()
-- [Level 8]()
