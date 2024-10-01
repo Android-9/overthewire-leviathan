@@ -32,7 +32,79 @@ Password: 3QJ3TgzHDq
 ---
 
 #### Level 2
+There is one file in the root directory called `check` which happens to be a setuid binary file.
 
+You can try test the program to see what it does:
+
+```bash
+leviathan1@gibson:~$ ./check
+password: dsadsa
+Wrong password, Good Bye ...
+```
+
+It seems that the only way would be to figure out what the password is.
+
+`ltrace` is a very useful program that simply runs a specified commad until it exits. It records the dynamic library calls that are called from the executable and the signals which are received by the process. Refer to the [ltrace](https://man7.org/linux/man-pages/man1/ltrace.1.html) documentation.
+
+To put it simply, it is able to (in a sense) print every step of the program and what is going on behind the scenes.
+
+Using `ltrace` and running `check` yields:
+
+```
+leviathan1@gibson:~$ ltrace ./check
+__libc_start_main(0x80490ed, 1, 0xffffd494, 0 <unfinished ...>
+printf("password: ")                        = 10
+getchar(0, 0, 0x786573, 0x646f67password: rea
+)           = 114
+getchar(0, 114, 0x786573, 0x646f67)         = 101
+getchar(0, 0x6572, 0x786573, 0x646f67)      = 97
+strcmp("rea", "sex")                        = -1
+puts("Wrong password, Good Bye ..."Wrong password, Good Bye ...
+)        = 29
++++ exited (status 0) +++
+```
+
+What you will find curiously, is that the program seems to compare your password input to another string, "sex". That could in fact be the correct password.
+
+So, why not try "sex" instead as the passsword?
+
+```
+leviathan1@gibson:~$ ltrace ./check
+__libc_start_main(0x80490ed, 2, 0xffffd484, 0 <unfinished ...>
+printf("password: ")                        = 10
+getchar(0, 0, 0x786573, 0x646f67password: sex
+)           = 115
+getchar(0, 115, 0x786573, 0x646f67)         = 101
+getchar(0, 0x6573, 0x786573, 0x646f67)      = 120
+strcmp("sex", "sex")                        = 0
+geteuid()                                   = 12001
+geteuid()                                   = 12001
+setreuid(12001, 12001)                      = 0
+system("/bin/sh"
+```
+
+You can see that inputting "sex" as the password results in a different output. It again compares the two strings, and because they match, it gets the effective user ID of the calling process, leviathan2 (because the setuid binary file runs as leviathan2). It then sets the real and effective user IDs as leviathan2. At the end, it calls the system to spawn a new shell.
+
+Now that we know this works, we can try running the program now for real without `ltrace`:
+
+```bash
+$ ./check
+password: sex
+$ whoami
+leviathan2
+```
+
+And just like that, you are now running a new bash shell as leviathan2.
+
+From here, it is very simple. Leviathan2 has access to its login password, so just read from `/etc/leviathan_pass/leviathan2`.
+
+> **Extra Information**
+> - [geteuid](https://linux.die.net/man/2/geteuid)
+> - [setreuid](https://man7.org/linux/man-pages/man2/setreuid.2.html)
+> - [What is Real and Effective user ID?](https://stackoverflow.com/questions/32455684/difference-between-real-user-id-effective-user-id-and-saved-user-id#:~:text=So%2C%20the%20real%20user%20id,%2C%20there%20are%20some%20exceptions)
+> <br> <br>
+
+Password: NsN1HwFoyN
 
 ---
 
