@@ -238,7 +238,68 @@ Password: f0n8h2iWLP
 ---
 
 #### Level 4
+This level is almost identical to [Level 2](#level-2) in terms of its approach.
 
+You have a setuid binary file `level3` in the root directory.
+
+Testing it with some arbitrary output yields:
+
+```bash
+leviathan3@gibson:~$ ./level3
+Enter the password> abc
+bzzzzzzzzap. WRONG
+```
+
+Again, we can use ltrace to investigate what is going on behind the scenes.
+
+```bash
+leviathan3@gibson:~$ ltrace ./level3
+__libc_start_main(0x80490ed, 1, 0xffffd494, 0 <unfinished ...>
+strcmp("h0no33", "kakaka")                                                 = -1
+printf("Enter the password> ")                                             = 20
+fgets(Enter the password> abc
+"abc\n", 256, 0xf7fae5c0)                                            = 0xffffd26c
+strcmp("abc\n", "snlprintf\n")                                             = -1
+puts("bzzzzzzzzap. WRONG"bzzzzzzzzap. WRONG
+)                                                 = 19
++++ exited (status 0) +++
+```
+
+You can see that the program takes the input and compares it with the string "snlprintf". 
+
+This time, try inputting the password as "snlprintf":
+
+```bash
+leviathan3@gibson:~$ ltrace ./level3
+__libc_start_main(0x80490ed, 2, 0xffffd474, 0 <unfinished ...>
+strcmp("h0no33", "kakaka")                                                 = -1
+printf("Enter the password> ")                                             = 20
+fgets(Enter the password> snlprintf
+"snlprintf\n", 256, 0xf7fae5c0)                                      = 0xffffd24c
+strcmp("snlprintf\n", "snlprintf\n")                                       = 0
+puts("[You've got shell]!"[You've got shell]!
+)                                                = 20
+geteuid()                                                                  = 12003
+geteuid()                                                                  = 12003
+setreuid(12003, 12003)                                                     = 0
+system("/bin/sh"
+```
+
+Just like in [Level 2](#level-2), inputting "snlprintf" makes the string comparison return true, and instead of giving an incorrect password message, fetches the effective user ID (leviathan4), sets the user ID as the effective user ID and runs a new shell.
+
+Now simply run the program as is without `ltrace`.
+
+```bash
+$ ./level3 ssnlprintf
+Enter the password> snlprintf
+[You've got shell]!
+$ whoami
+leviathan4
+```
+
+You now are running a new shell session as leviathan4. Given this, it is as easy as grabbing the password with `cat /etc/leviathan_pass/leviathan4`.
+
+Password: WG1egElCvO
 
 ---
 
