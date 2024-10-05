@@ -304,7 +304,43 @@ Password: WG1egElCvO
 ---
 
 #### Level 5
+Using the base `ls`, you will find that there are no files.
 
+Try listing all files including hidden ones:
+
+```bash
+leviathan4@gibson:~$ ls  -la
+total 24
+drwxr-xr-x  3 root root       4096 Sep 19 07:07 .
+drwxr-xr-x 83 root root       4096 Sep 19 07:09 ..
+-rw-r--r--  1 root root        220 Mar 31  2024 .bash_logout
+-rw-r--r--  1 root root       3771 Mar 31  2024 .bashrc
+-rw-r--r--  1 root root        807 Mar 31  2024 .profile
+dr-xr-x---  2 root leviathan4 4096 Sep 19 07:07 .trash
+```
+
+Curiously, there is a directory called `.trash`.
+
+Navigating into it, you will find a setuid binary file once again called `bin`.
+
+Running this yields:
+
+```bash
+leviathan4@gibson:~/.trash$ ./bin
+00110000 01100100 01111001 01111000 01010100 00110111 01000110 00110100 01010001 01000100 00001010
+```
+
+It outputs a string of binary in blocks of 8-bits.
+
+In order to convert this back into ASCII text, you can very easily search up online for a binary to ASCII text converter, however this can also be done more painfully using bash.
+
+`perl` is a command that 
+
+> A very helpful resource from StackExchange on [ASCII-Binary & Binary-ASCII](https://unix.stackexchange.com/questions/98948/ascii-to-binary-and-binary-to-ascii-conversion-tools).
+
+`./bin | perl -lape '$_=pack"(B8)*",@F'`
+
+Password: 0dyxT7F4QD
 
 ---
 
