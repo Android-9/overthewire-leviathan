@@ -44,7 +44,7 @@ Wrong password, Good Bye ...
 
 It seems that the only way would be to figure out what the password is.
 
-`ltrace` is a very useful program that simply runs a specified commad until it exits. It records the dynamic library calls that are called from the executable and the signals which are received by the process. Refer to the [ltrace](https://man7.org/linux/man-pages/man1/ltrace.1.html) documentation.
+`ltrace` is a very useful program that simply runs a specified command until it exits. It records the dynamic library calls that are called from the executable and the signals which are received by the process. Refer to the [ltrace](https://man7.org/linux/man-pages/man1/ltrace.1.html) documentation.
 
 To put it simply, it is able to (in a sense) print every step of the program and what is going on behind the scenes.
 
@@ -66,7 +66,7 @@ puts("Wrong password, Good Bye ..."Wrong password, Good Bye ...
 
 What you will find curiously, is that the program seems to compare your password input to another string, "sex". That could in fact be the correct password.
 
-So, why not try "sex" instead as the passsword?
+So, why not try "sex" instead as the password?
 
 ```
 leviathan1@gibson:~$ ltrace ./check
