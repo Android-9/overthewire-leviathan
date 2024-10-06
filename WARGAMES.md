@@ -332,13 +332,39 @@ leviathan4@gibson:~/.trash$ ./bin
 
 It outputs a string of binary in blocks of 8-bits.
 
-In order to convert this back into ASCII text, you can very easily search up online for a binary to ASCII text converter, however this can also be done more painfully using bash.
+In order to convert this back into ASCII text, you can very easily search up online for a binary to ASCII text converter, however this can also be done more painfully within the shell.
 
-`perl` is a command that 
+[Perl](https://en.wikipedia.org/wiki/Perl) is a programming language that stands for Practical Extraction and Report Language because it was originally designed for scanning text files, extracting information and printing reports based on it. It is now a general-purpose programming language that is very practical and can be quite useful to perform tasks that would otherwise be very troublesome to do in bash.
 
-> A very helpful resource from StackExchange on [ASCII-Binary & Binary-ASCII](https://unix.stackexchange.com/questions/98948/ascii-to-binary-and-binary-to-ascii-conversion-tools).
+> - [Linux Perl Command Overview](https://www.computerhope.com/unix/uperl.htm)
+> - [Perl Command Line Options](https://www.perl.com/pub/2004/08/09/commandline.html/)
+> - A very helpful resource from StackExchange on [ASCII-Binary & Binary-ASCII](https://unix.stackexchange.com/questions/98948/ascii-to-binary-and-binary-to-ascii-conversion-tools).
 
-`./bin | perl -lape '$_=pack"(B8)*",@F'`
+If you have a search on how to convert binary to ASCII you will come across a helpful StackExchange thread linked above. The relevant line is:
+
+`perl -lape '$_=pack"(B8)*",@F'`
+
+The `-l` flag tells Perl to automatically add a newline character after each line of output.
+
+The `-a` splits each line of input into an array, with the delimiter being a space. The elements are stored in an array called `@F`.
+
+The `-p` tells Perl to process each line of input and automatically print it after executing the line.
+
+The `-e` is for executing code you provide as an argument in single quotes.
+
+For the actual code `$_=pack"(B8)*",@F'`;
+
+The `$_` is the default variable in Perl that holds the current line of input. In this case, it is set to whatever the output of `pack` is.
+
+`pack` is a function that takes a format such as `"(B8)*"` and a list of elements like `@F`. The `"(B8)*"` here indicates that you want `pack` to treat the elements as binary strings (with each being 8 bits), and convert them into their corresponding characters.
+
+Now, just feed the output of `./bin` to the `perl` command with a pipe.
+
+```bash
+leviathan4@gibson:~/.trash$ ./bin | perl -lape '$_=pack"(B8)*",@F'
+0dyxT7F4QD
+
+```
 
 Password: 0dyxT7F4QD
 
