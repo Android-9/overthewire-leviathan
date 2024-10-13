@@ -406,3 +406,39 @@ Password: szo7HDB88w
 ---
 
 #### Level 7
+You will again find a setuid binary file `leviathan6` in the root directory.
+
+Running this gives:
+
+```bash
+leviathan6@gibson:~$ ./leviathan6 
+usage: ./leviathan6 <4 digit code>
+```
+
+It seems to require a 4-digit code. If you input say, an arbitrary combination 1234, it will respond with "Wrong". Using the command `ltrace` also will not yield anything useful.
+
+One simple solution is to use brute-force.
+
+Create a bash script that runs the binary file with every possible combination (remember to create a temporary directort first):
+
+```bash
+#!/bin/bash
+
+cd ~
+
+for i in {0000..9999}
+do
+        ./leviathan6 $i
+done
+```
+
+After running this script, you will find with `whoami` that you are now leviathan7. The final step is simply to read the password file in `/etc/leviathan_pass/leviathan7`.
+
+##### Alternative Solution (Courtesy of MayADevBe)
+...
+
+[Leviathan Level 6 -> 7](https://mayadevbe.me/posts/overthewire/leviathan/level7/)
+
+Password: qEs5Io5yM8
+
+> NOTE: This is the end of Leviathan, however you can `ssh` into leviathan7 just to test if the password is correct.
