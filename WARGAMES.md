@@ -419,7 +419,7 @@ It seems to require a 4-digit code. If you input say, an arbitrary combination 1
 
 One simple solution is to use brute-force.
 
-Create a bash script that runs the binary file with every possible combination (remember to create a temporary directort first):
+Create a bash script that runs the binary file with every possible combination (remember to create a temporary directory first):
 
 ```bash
 #!/bin/bash
